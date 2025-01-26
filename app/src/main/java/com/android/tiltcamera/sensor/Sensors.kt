@@ -12,10 +12,10 @@ class LightSensor(
     sensorType = Sensor.TYPE_LIGHT
 )
 
-class TiltSensor(
+class RotationVectorSensor(
     context: Context
 ): AndroidSensor(
     context = context,
-    sensorFeature = PackageManager.FEATURE_SENSOR_GYROSCOPE,
-    sensorType = Sensor.TYPE_GYROSCOPE
+    sensorFeature = PackageManager.FEATURE_SENSOR_ACCELEROMETER,
+    sensorType = Sensor.TYPE_ROTATION_VECTOR
 )

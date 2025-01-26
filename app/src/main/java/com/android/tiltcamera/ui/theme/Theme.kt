@@ -1,6 +1,5 @@
 package com.android.tiltcamera.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +48,8 @@ fun TiltCameraTheme(
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
+
+
 
     MaterialTheme(
         colorScheme = colorScheme,
