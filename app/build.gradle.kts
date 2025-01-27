@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.extended)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -64,40 +65,43 @@ dependencies {
 
     implementation(libs.kotlinx.serialization.json)
 
-
+    
+    // TIMBER
     implementation(libs.timber)
 
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    // LIFECYCLE
     implementation(libs.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
 
+    // CAMERA
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.video)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.extensions)
+
+    // NAVIGATION
     implementation(libs.jetbrains.compose.navigation)
 
-    implementation(compose.components.resources)
-
+    // DAGGER HILT
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     ksp(libs.androidx.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
+    // ROOM
     ksp(libs.androidx.room.compiler)
-    // Kotlin extensions and coroutines support for Room
-    implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.room.ktx) // Kotlin extensions and coroutines support for Room
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
 
-    implementation(libs.androidx.camera.core)
-    implementation(libs.androidx.camera.camera2)
-    implementation(libs.androidx.camera.lifecycle)
-    implementation(libs.androidx.camera.video)
-
-    implementation(libs.androidx.camera.view)
-    implementation(libs.androidx.camera.extensions)
-
+    // COIL
     implementation(libs.bundles.coil)
 
 
-
+    implementation(compose.components.resources)
 }
