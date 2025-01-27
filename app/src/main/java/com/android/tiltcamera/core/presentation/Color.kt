@@ -1,4 +1,4 @@
-package com.android.tiltcamera.ui.theme
+package com.android.tiltcamera.core.presentation
 
 import androidx.compose.ui.graphics.Color
 

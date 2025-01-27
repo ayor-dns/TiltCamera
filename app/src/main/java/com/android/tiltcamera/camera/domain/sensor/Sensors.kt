@@ -1,4 +1,4 @@
-package com.android.tiltcamera.sensor
+package com.android.tiltcamera.camera.domain.sensor
 
 import android.content.Context
 import android.content.pm.PackageManager

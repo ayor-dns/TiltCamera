@@ -1,4 +1,4 @@
-package com.android.tiltcamera.sensor
+package com.android.tiltcamera.camera.domain.sensor
 
 abstract class MeasurableSensor(
     protected val sensorType: Int

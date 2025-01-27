@@ -1,4 +1,4 @@
-package com.android.tiltcamera
+package com.android.tiltcamera.app
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp

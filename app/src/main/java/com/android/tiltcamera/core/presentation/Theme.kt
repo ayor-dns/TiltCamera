@@ -1,4 +1,4 @@
-package com.android.tiltcamera.ui.theme
+package com.android.tiltcamera.core.presentation
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
