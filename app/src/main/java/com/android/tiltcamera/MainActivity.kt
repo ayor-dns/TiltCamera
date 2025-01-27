@@ -1,6 +1,7 @@
 package com.android.tiltcamera
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -9,34 +10,21 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.android.tiltcamera.app.Route
-import com.android.tiltcamera.camera.presentation.CameraScreen
 import com.android.tiltcamera.camera.presentation.CameraScreenRoot
 import com.android.tiltcamera.camera.presentation.CameraViewModel
 import com.android.tiltcamera.core.presentation.TiltCameraTheme
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.Locale
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -47,20 +35,19 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    private var hasRequiredPermissions = false
+
     private fun hasRequiredPermissions(): Boolean {
         return CAMERAX_PERMISSIONS.all {
             checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED
         }
     }
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if(!hasRequiredPermissions()) {
-            ActivityCompat.requestPermissions(
-                this, CAMERAX_PERMISSIONS, 0
-            )
-        }
+        hasRequiredPermissions = hasRequiredPermissions()
 
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(
@@ -92,7 +79,7 @@ class MainActivity : ComponentActivity() {
                             val viewModel = hiltViewModel<CameraViewModel>()
 
                             CameraScreenRoot(
-                                viewModel = viewModel
+                                viewModel = viewModel,
                             )
 
                         }
@@ -108,5 +95,16 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        hasRequiredPermissions = hasRequiredPermissions()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        hasRequiredPermissions = hasRequiredPermissions()
+    }
+
 }
 
