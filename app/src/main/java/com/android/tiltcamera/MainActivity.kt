@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.PowerManager
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -13,6 +14,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -35,6 +38,8 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    private lateinit var wakeLock: PowerManager.WakeLock
+
     private var hasRequiredPermissions = false
 
     private fun hasRequiredPermissions(): Boolean {
@@ -46,6 +51,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        initializeWakeLock()
 
         hasRequiredPermissions = hasRequiredPermissions()
 
@@ -78,8 +85,20 @@ class MainActivity : ComponentActivity() {
 
                             val viewModel = hiltViewModel<CameraViewModel>()
 
+                            LaunchedEffect(Unit) {
+                                wakeLock.acquire(5*60*1000L /*5 minutes*/)
+                            }
+                            DisposableEffect(Unit) {
+                                onDispose {
+                                    wakeLock.release()
+                                }
+                            }
+
                             CameraScreenRoot(
                                 viewModel = viewModel,
+                                onNavigate = { route ->
+                                    navController.navigate(route)
+                                }
                             )
 
                         }
@@ -96,6 +115,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun initializeWakeLock() {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "TiltCameraApp::MyWakeLockTag"
+        )
+    }
+
     override fun onResume() {
         super.onResume()
         hasRequiredPermissions = hasRequiredPermissions()
@@ -104,6 +131,10 @@ class MainActivity : ComponentActivity() {
     override fun onPause() {
         super.onPause()
         hasRequiredPermissions = hasRequiredPermissions()
+
+        if (wakeLock.isHeld) {
+            wakeLock.release()
+        }
     }
 
 }
