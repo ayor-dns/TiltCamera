@@ -7,6 +7,7 @@ fun CameraResolution.toCameraResolutionEntity(): CameraResolutionEntity {
     return CameraResolutionEntity(
         cameraResolutionId = cameraResolutionId,
         displayName = displayName,
+        lensFacing = lensFacing,
         height = height,
         width = width
     )
@@ -16,6 +17,7 @@ fun CameraResolutionEntity.toCameraResolution(): CameraResolution {
     return CameraResolution(
         cameraResolutionId = cameraResolutionId,
         displayName = displayName,
+        lensFacing = lensFacing,
         height = height,
         width = width
     )

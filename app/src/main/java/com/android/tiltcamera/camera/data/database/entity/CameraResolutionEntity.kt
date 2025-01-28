@@ -8,6 +8,7 @@ data class CameraResolutionEntity(
     @PrimaryKey(autoGenerate = true)
     val cameraResolutionId: Long,
     val displayName: String,
-    val height: Long,
-    val width: Long,
+    val lensFacing: Int,
+    val height: Int,
+    val width: Int,
 )
