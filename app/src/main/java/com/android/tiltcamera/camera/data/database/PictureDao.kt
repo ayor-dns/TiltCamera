@@ -5,6 +5,8 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.android.tiltcamera.camera.data.database.entity.PictureCollectionEntity
+import com.android.tiltcamera.camera.data.database.entity.PictureEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -19,6 +21,9 @@ interface PictureDao {
     @Query("SELECT * FROM PictureEntity")
     fun getPictures(): Flow<List<PictureEntity>>
 
-    @Query("SELECT * FROM PictureEntity WHERE collectionIdFK = :collectionId")
-    fun getPicturesByCollectionId(collectionId: Long): Flow<List<PictureEntity>>
+    @Query("SELECT * FROM PictureCollectionEntity WHERE collectionId = :id")
+    suspend fun getPicturesCollectionById(id: Long): PictureCollectionEntity
+
+    @Query("SELECT * FROM PictureCollectionEntity")
+    fun getPicturesByCollections(): Flow<List<PictureCollectionEntity>>
 }
