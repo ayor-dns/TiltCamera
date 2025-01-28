@@ -7,8 +7,6 @@
         android:required="true" />
     <uses-permission android:name="android.permission.CAMERA"/>
 
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-
     <application
         android:name=".app.TiltCameraApp"
         android:allowBackup="true"
