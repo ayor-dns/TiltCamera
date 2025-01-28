@@ -2,12 +2,18 @@ package com.android.tiltcamera.camera.presentation
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.util.Size
+import android.view.Surface
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
+import androidx.camera.core.resolutionselector.ResolutionFilter
 import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
+import androidx.camera.core.resolutionselector.ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
 import androidx.camera.view.LifecycleCameraController
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -56,11 +62,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.tiltcamera.R
 import com.android.tiltcamera.app.Route
 import com.android.tiltcamera.camera.domain.AspectRatioMode
-import com.android.tiltcamera.camera.domain.model.CameraResolution
 import com.android.tiltcamera.camera.domain.takePhoto
 import com.android.tiltcamera.camera.presentation.components.CameraOptionBottomSheet
 import com.android.tiltcamera.camera.presentation.components.CameraPreview
 import com.android.tiltcamera.camera.presentation.components.LastPicturePreview
+import com.android.tiltcamera.camera.presentation.components.NewCollectionDialog
 import com.android.tiltcamera.camera.presentation.components.NoPermissionScreen
 import com.android.tiltcamera.core.presentation.Pink
 import com.android.tiltcamera.core.presentation.Purple
@@ -129,28 +135,52 @@ fun CameraScreen(
         }
     }
 
-    LaunchedEffect(key1 = state.aspectRatioMode){
-        val aspectRatioStrategy = when(state.aspectRatioMode){
+    LaunchedEffect(key1 = state.currentAspectRatioMode){
+        val aspectRatioStrategy = when(state.currentAspectRatioMode){
             AspectRatioMode.RATIO_16_9 -> AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY
             AspectRatioMode.RATIO_4_3 -> AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY
         }
         controller.previewResolutionSelector = ResolutionSelector.Builder().setAspectRatioStrategy(aspectRatioStrategy).build()
+        controller.imageCaptureResolutionSelector = ResolutionSelector.Builder().setAspectRatioStrategy(aspectRatioStrategy).build()
     }
+
+    LaunchedEffect(key1 = state.currentCameraSelector) {
+        controller.cameraSelector = state.currentCameraSelector
+    }
+
+    LaunchedEffect(key1 = state.currentResolution) {
+        val targetWidth = state.currentResolution?.width ?: Int.MAX_VALUE
+        val targetHeight = state.currentResolution?.height ?: Int.MAX_VALUE
+
+        val aspectRatioStrategy = when(state.currentAspectRatioMode){
+            AspectRatioMode.RATIO_16_9 -> AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY
+            AspectRatioMode.RATIO_4_3 -> AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY
+        }
+
+        controller.imageCaptureResolutionSelector = ResolutionSelector.Builder()
+            .setAspectRatioStrategy(aspectRatioStrategy)
+            .setResolutionStrategy(ResolutionStrategy(Size(targetWidth, targetHeight),FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)).build()
+
+
+    }
+
 
     if(isSheetOpen){
         CameraOptionBottomSheet(
             onDismissRequest = { isSheetOpen = false },
             sheetState = sheetState,
             onAction = onAction,
-            currentCollection = state.currentCollection,
-            collections = state.collections,
-            currentResolution =  CameraResolution(1, "10x10", 10, 10) , //state.currentResolution,
-            resolutions = emptyList(), // state.resolutions,
-            showPictureInfo = state.showPictureInfo,
-            aspectRatioOptions = state.aspectRatioOptions,
-            currentAspectRatio = state.aspectRatioOptions.firstOrNull{ it.data == state.aspectRatioMode }
+            state = state
         )
     }
+    NewCollectionDialog(
+        showDialog = state.showNewCollectionDialog,
+        aspectRatioOptions = state.aspectRatioOptions,
+        picturesCollection = state.newCollection,
+        nameError = state.nameError,
+        onAction = onAction
+    )
+
 
     Box(modifier = Modifier
         .fillMaxSize()
@@ -170,6 +200,7 @@ fun CameraScreen(
                     controller = controller,
                     modifier = Modifier.fillMaxSize()
                 )
+
 
                 // azimuth, pitch, roll info
                 if(state.showPictureInfo) {
@@ -278,10 +309,12 @@ fun CameraScreen(
                     IconButton(
                         enabled = state.hasFrontCamera,
                         onClick = {
-                            controller.cameraSelector =
+                            val cameraSelector =
                                 if (controller.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
                                     CameraSelector.DEFAULT_FRONT_CAMERA
                                 } else CameraSelector.DEFAULT_BACK_CAMERA
+
+                            onAction(CameraAction.SwitchCamera(cameraSelector))
                         },
                         modifier = Modifier
                             .size(48.dp)

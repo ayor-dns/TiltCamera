@@ -46,7 +46,7 @@ fun <T> LargeDropdownMenu(
     selectedItemToString: (T) -> String = { it.toString() },
     drawItem: @Composable (T, Boolean, Boolean, () -> Unit) -> Unit = { item, selected, itemEnabled, onClick ->
         LargeDropdownMenuItem(
-            text = item.toString(),
+            text = selectedItemToString(item),
             selected = selected,
             enabled = itemEnabled,
             onClick = onClick,

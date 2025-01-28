@@ -18,7 +18,8 @@ fun <T> DropDownMenuWithLabel(
     items: List<T>,
     selectedIndex: Int = -1,
     onItemSelected: (index: Int, item: T) -> Unit,
-    selectedItemToString: (T) -> String = { it.toString() }
+    selectedItemToString: (T) -> String = { it.toString() },
+    notSetLabel: String? = null,
 ) {
 
     Row(modifier = modifier
@@ -38,6 +39,7 @@ fun <T> DropDownMenuWithLabel(
             modifier = Modifier,
             enabled = enabled,
             items = items,
+            notSetLabel = notSetLabel,
             selectedIndex = selectedIndex,
             onItemSelected = { index, item ->
                 onItemSelected(index, item)

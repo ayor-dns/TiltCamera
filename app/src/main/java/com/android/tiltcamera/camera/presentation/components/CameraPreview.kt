@@ -18,10 +18,11 @@ fun CameraPreview(
     AndroidView(
         factory = {
             PreviewView(it).apply {
+                this.setBackgroundColor(Color.Black.copy(alpha = 0f).toArgb())
                 this.scaleType = PreviewView.ScaleType.FIT_START
                 this.controller = controller
                 controller.bindToLifecycle(lifecycleOwner)
-                this.setBackgroundColor(Color.Black.copy(alpha = 0f).toArgb())
+
             }
         },
         modifier = modifier
