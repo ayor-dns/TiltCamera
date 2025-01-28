@@ -30,17 +30,14 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,19 +53,17 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
 import com.android.tiltcamera.R
 import com.android.tiltcamera.app.Route
-import com.android.tiltcamera.camera.domain.CameraResolution
+import com.android.tiltcamera.camera.domain.AspectRatioMode
+import com.android.tiltcamera.camera.domain.model.CameraResolution
 import com.android.tiltcamera.camera.domain.takePhoto
 import com.android.tiltcamera.camera.presentation.components.CameraOptionBottomSheet
 import com.android.tiltcamera.camera.presentation.components.CameraPreview
 import com.android.tiltcamera.camera.presentation.components.LastPicturePreview
 import com.android.tiltcamera.camera.presentation.components.NoPermissionScreen
-import com.android.tiltcamera.camera.presentation.components.OptionItem
 import com.android.tiltcamera.core.presentation.Pink
 import com.android.tiltcamera.core.presentation.Purple
-import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.Locale
 
@@ -119,13 +114,10 @@ fun CameraScreen(
     onAction: (CameraAction) -> Unit,
     onNavigate: (route: Route) -> Unit
 ) {
-    val scope = rememberCoroutineScope()
-
     val sheetState = rememberModalBottomSheetState()
     var isSheetOpen by rememberSaveable {
         mutableStateOf(false)
     }
-
 
     val context = LocalContext.current
     val controller = remember {
@@ -152,7 +144,7 @@ fun CameraScreen(
             onAction = onAction,
             currentCollection = state.currentCollection,
             collections = state.collections,
-            currentResolution =  CameraResolution("10x10", 10, 10) , //state.currentResolution,
+            currentResolution =  CameraResolution(1, "10x10", 10, 10) , //state.currentResolution,
             resolutions = emptyList(), // state.resolutions,
             showPictureInfo = state.showPictureInfo,
             aspectRatioOptions = state.aspectRatioOptions,
@@ -214,52 +206,39 @@ fun CameraScreen(
                     }
                 }
 
-
-
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Spacer(modifier = Modifier.weight(3.8f))
                     Row(modifier = Modifier.weight(1f)){
-                        Row(horizontalArrangement = Arrangement.spacedBy(40.dp, Alignment.CenterHorizontally),
-                            verticalAlignment = Alignment.CenterVertically
-                        ){
-
-
-
-                            // take picture button
-                            IconButton(
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .size(80.dp)
-                                    .background(Color.White.copy(alpha = 0.5f)),
-                                onClick = {
-                                    Timber.d("take photo. isSavingPicture=${state.isSavingPicture}")
-                                    if(!state.isSavingPicture){
-                                        takePhoto(
-                                            context = context,
-                                            controller = controller,
-                                            onPhotoTaken = { bitmap ->
-                                                onAction(CameraAction.OnTakePhoto(bitmap))
-                                            }
-                                        )
-                                    }
-                                }
-                            ) {
-                                if(state.isSavingPicture){
-                                    CircularProgressIndicator()
-                                } else {
-                                    Icon(
-                                        imageVector = Icons.Default.PhotoCamera,
-                                        contentDescription = "Take photo"
+                        // take picture button
+                        IconButton(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .size(80.dp)
+                                .background(Color.White.copy(alpha = 0.5f)),
+                            onClick = {
+                                Timber.d("take photo. isSavingPicture=${state.isSavingPicture}")
+                                if(!state.isSavingPicture){
+                                    takePhoto(
+                                        context = context,
+                                        controller = controller,
+                                        onPhotoTaken = { bitmap ->
+                                            onAction(CameraAction.OnTakePhoto(bitmap))
+                                        }
                                     )
                                 }
                             }
-
-
-
-
+                        ) {
+                            if(state.isSavingPicture){
+                                CircularProgressIndicator()
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.PhotoCamera,
+                                    contentDescription = "Take photo"
+                                )
+                            }
                         }
                     }
                 }
