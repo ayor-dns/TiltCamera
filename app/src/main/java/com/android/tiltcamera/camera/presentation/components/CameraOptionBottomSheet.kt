@@ -14,9 +14,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.android.tiltcamera.camera.domain.CameraResolution
-import com.android.tiltcamera.camera.domain.PicturesCollection
-import com.android.tiltcamera.camera.presentation.AspectRatioMode
+import com.android.tiltcamera.camera.domain.AspectRatioMode
+import com.android.tiltcamera.camera.domain.model.CameraResolution
+import com.android.tiltcamera.camera.domain.model.PicturesCollection
 import com.android.tiltcamera.camera.presentation.CameraAction
 import com.android.tiltcamera.core.presentation.Purple
 

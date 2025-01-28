@@ -1,13 +1,15 @@
 package com.android.tiltcamera.camera.data.mappers
 
-import com.android.tiltcamera.camera.data.database.PictureCollectionEntity
-import com.android.tiltcamera.camera.domain.PicturesCollection
+import com.android.tiltcamera.camera.data.database.entity.PictureCollectionEntity
+import com.android.tiltcamera.camera.domain.model.PicturesCollection
 
 fun PicturesCollection.toPicturesCollectionEntity(): PictureCollectionEntity {
     return PictureCollectionEntity(
         collectionId = collectionId,
         name = name,
-        creationTimestamp = creationTimestamp
+        creationTimestamp = creationTimestamp,
+        cameraResolutionIdFK = cameraResolutionIdFK,
+        aspectRatioMode = aspectRatioMode
     )
 }
 
@@ -16,5 +18,7 @@ fun PictureCollectionEntity.toPicturesCollection(): PicturesCollection {
         collectionId = collectionId,
         name = name,
         creationTimestamp = creationTimestamp,
+        cameraResolutionIdFK = cameraResolutionIdFK,
+        aspectRatioMode = aspectRatioMode
     )
 }

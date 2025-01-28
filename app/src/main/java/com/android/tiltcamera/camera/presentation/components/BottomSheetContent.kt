@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.android.tiltcamera.camera.domain.Picture
-import com.android.tiltcamera.camera.domain.PicturesCollection
+import com.android.tiltcamera.camera.domain.model.Picture
+import com.android.tiltcamera.camera.domain.model.PicturesCollection
 
 @Composable
 fun BottomSheetContent(
