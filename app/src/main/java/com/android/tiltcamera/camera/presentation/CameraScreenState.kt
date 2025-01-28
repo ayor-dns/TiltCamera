@@ -1,13 +1,10 @@
 package com.android.tiltcamera.camera.presentation
 
 import android.net.Uri
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.android.tiltcamera.R
-import com.android.tiltcamera.camera.domain.Picture
-import com.android.tiltcamera.camera.domain.PicturesCollection
+import com.android.tiltcamera.camera.domain.AspectRatioMode
+import com.android.tiltcamera.camera.domain.model.Picture
+import com.android.tiltcamera.camera.domain.model.PicturesCollection
 import com.android.tiltcamera.camera.presentation.components.OptionItem
 
 data class CameraScreenState(
@@ -31,8 +28,5 @@ data class CameraScreenState(
         ),
 
 
-)
+    )
 
-enum class AspectRatioMode {
-    RATIO_16_9, RATIO_4_3
-}
