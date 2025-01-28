@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.PowerManager
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -28,6 +29,7 @@ import com.android.tiltcamera.camera.presentation.CameraScreenRoot
 import com.android.tiltcamera.camera.presentation.CameraViewModel
 import com.android.tiltcamera.core.presentation.TiltCameraTheme
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -38,7 +40,6 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    private lateinit var wakeLock: PowerManager.WakeLock
 
     private var hasRequiredPermissions = false
 
@@ -52,7 +53,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        initializeWakeLock()
+
 
         hasRequiredPermissions = hasRequiredPermissions()
 
@@ -86,11 +87,11 @@ class MainActivity : ComponentActivity() {
                             val viewModel = hiltViewModel<CameraViewModel>()
 
                             LaunchedEffect(Unit) {
-                                wakeLock.acquire(5*60*1000L /*5 minutes*/)
+                                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                             }
                             DisposableEffect(Unit) {
                                 onDispose {
-                                    wakeLock.release()
+                                    window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                                 }
                             }
 
@@ -115,13 +116,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun initializeWakeLock() {
-        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-        wakeLock = powerManager.newWakeLock(
-            PowerManager.PARTIAL_WAKE_LOCK,
-            "TiltCameraApp::MyWakeLockTag"
-        )
-    }
 
     override fun onResume() {
         super.onResume()
@@ -132,10 +126,7 @@ class MainActivity : ComponentActivity() {
         super.onPause()
         hasRequiredPermissions = hasRequiredPermissions()
 
-        if (wakeLock.isHeld) {
-            wakeLock.release()
-        }
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
-
 }
 
