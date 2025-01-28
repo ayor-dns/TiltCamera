@@ -14,6 +14,11 @@ val Pink40 = Color(0xFF7D5260)
 val Pink = Color(0xFFD5185C)
 val Purple = Color(0xFF31338A)
 
+
+val GreenValid = Color(0xFF0BAF39)
+val RedError = Color(0xFFCF2A2A)
+val Blue = Color(0xFF006092)
 val Grey700 = Color(0xFF707070)
 val Grey500 = Color(0xFFADADAD)
 val Grey300 = Color(0xFFD1D1D1)
+val Grey100 = Color(0xFFE0E0E0)

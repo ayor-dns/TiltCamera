@@ -32,3 +32,10 @@ val Typography = Typography(
     )
     */
 )
+
+val inputErrorTextStyle = TextStyle(
+    fontSize = 12.sp,
+    fontWeight = FontWeight.Light,
+    lineHeight = 14.sp,
+    color = RedError
+)
