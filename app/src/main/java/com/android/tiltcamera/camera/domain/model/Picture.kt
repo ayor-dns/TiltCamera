@@ -1,4 +1,4 @@
-package com.android.tiltcamera.camera.domain
+package com.android.tiltcamera.camera.domain.model
 
 import android.net.Uri
 
