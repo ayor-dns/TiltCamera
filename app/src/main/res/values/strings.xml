@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">TiltCamera</string>
+
+
+    <string name="PictureCollectionNameError_ALREADY_EXISTS">Le nom existe déjà.</string>
+    <string name="PictureCollectionNameError_EMPTY_NAME">Le nom ne peut pas être vide.</string>
+    <string name="PictureCollectionNameError_INVALID_CHARACTERS">Caractères invalides</string>
+    <string name="PictureCollectionNameError_TOO_LONG">Le nom est trop long (max 100).</string>
+
 </resources>
