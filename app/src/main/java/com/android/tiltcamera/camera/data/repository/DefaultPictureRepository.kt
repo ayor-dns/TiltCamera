@@ -1,24 +1,17 @@
 package com.android.tiltcamera.camera.data.repository
 
-import com.android.tiltcamera.camera.data.database.PictureDao
-import com.android.tiltcamera.camera.data.mappers.toPicturesCollection
-import com.android.tiltcamera.camera.domain.model.PicturesCollection
+import android.net.Uri
+import com.android.tiltcamera.camera.data.database.dao.PictureDao
 import com.android.tiltcamera.camera.domain.repository.PictureRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 
 class DefaultPictureRepository(
     private val pictureDao: PictureDao
 ): PictureRepository {
-    override suspend fun getPicturesCollectionById(id: Long): PicturesCollection {
-        return pictureDao.getPicturesCollectionById(id).toPicturesCollection()
+
+
+    override suspend fun getLastPictureUriByCollectionId(collectionId: Long): Uri? {
+        return pictureDao.getLastPictureUriByCollectionId(collectionId)
     }
 
-    override fun getPicturesCollections(): Flow<List<PicturesCollection>> {
-        return pictureDao.getPicturesByCollections().map {entityList ->
-            entityList.map { entity ->
-                entity.toPicturesCollection()
-            }
-        }
-    }
+
 }
