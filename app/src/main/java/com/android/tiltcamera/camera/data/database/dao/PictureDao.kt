@@ -1,5 +1,6 @@
-package com.android.tiltcamera.camera.data.database
+package com.android.tiltcamera.camera.data.database.dao
 
+import android.net.Uri
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -21,9 +22,7 @@ interface PictureDao {
     @Query("SELECT * FROM PictureEntity")
     fun getPictures(): Flow<List<PictureEntity>>
 
-    @Query("SELECT * FROM PictureCollectionEntity WHERE collectionId = :id")
-    suspend fun getPicturesCollectionById(id: Long): PictureCollectionEntity
+    @Query("SELECT pictureUri FROM PictureEntity WHERE collectionIdFK = :collectionId ORDER BY creationTimestamp DESC LIMIT 1")
+    suspend fun getLastPictureUriByCollectionId(collectionId: Long): Uri?
 
-    @Query("SELECT * FROM PictureCollectionEntity")
-    fun getPicturesByCollections(): Flow<List<PictureCollectionEntity>>
 }
