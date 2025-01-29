@@ -6,6 +6,8 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 fun openAppSettings(context: Context) {
     val intent = Intent(
@@ -21,4 +23,16 @@ fun getTextColor(backgroundColor: Color): Color {
     val contrastRatio = (luminance1 + 0.05) / (luminance2 + 0.05)
     val textColor = if (contrastRatio > 5) Color.Black else Color.White
     return textColor
+}
+
+fun getCurrentTimeInMillis(): Long {
+    // Get the default system timezone
+    val zoneId: ZoneId = ZoneId.systemDefault()
+
+    // Get the current time in the specified timezone
+    val currentTime: ZonedDateTime = ZonedDateTime.now(zoneId)
+
+    // Convert ZonedDateTime to Instant and get time in milliseconds
+    return currentTime.toInstant().toEpochMilli()
+
 }
