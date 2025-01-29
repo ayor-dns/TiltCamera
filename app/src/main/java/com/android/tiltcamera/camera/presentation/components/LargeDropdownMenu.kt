@@ -42,6 +42,7 @@ fun <T> LargeDropdownMenu(
     notSetLabel: String? = null,
     items: List<T>,
     selectedIndex: Int = -1,
+    emptyPlaceholder: String = "",
     onItemSelected: (index: Int, item: T) -> Unit,
     selectedItemToString: (T) -> String = { it.toString() },
     drawItem: @Composable (T, Boolean, Boolean, () -> Unit) -> Unit = { item, selected, itemEnabled, onClick ->
@@ -59,7 +60,8 @@ fun <T> LargeDropdownMenu(
     Box(modifier = modifier.height(IntrinsicSize.Min), contentAlignment = Alignment.CenterEnd) {
         Row(modifier = Modifier.clickable(enabled = enabled) { expanded = true }, horizontalArrangement = Arrangement.SpaceBetween){
             Text(color = if(enabled) Color.Black else Grey300,
-                text = items.getOrNull(selectedIndex)?.let { selectedItemToString(it) } ?: "",)
+                text = items.getOrNull(selectedIndex)?.let { selectedItemToString(it) } ?: emptyPlaceholder,
+                )
 
             Icon(painter = painterResource(id = if(expanded) R.drawable.arrow_drop_up_fill0_wght200 else R.drawable.arrow_drop_down_fill0_wght200 ),
                 contentDescription = null,

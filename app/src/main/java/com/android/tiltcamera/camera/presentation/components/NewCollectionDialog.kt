@@ -1,5 +1,6 @@
 package com.android.tiltcamera.camera.presentation.components
 
+import androidx.camera.core.CameraSelector
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.android.tiltcamera.R
 import com.android.tiltcamera.camera.domain.AspectRatioMode
+import com.android.tiltcamera.camera.domain.CameraResolution
 import com.android.tiltcamera.camera.domain.model.PicturesCollection
 import com.android.tiltcamera.camera.presentation.CameraAction
 import com.android.tiltcamera.core.presentation.Grey100
@@ -48,8 +50,10 @@ import com.android.tiltcamera.core.presentation.inputErrorTextStyle
 @Composable
 fun NewCollectionDialog(
     showDialog: Boolean,
-    aspectRatioOptions: List<OptionItem>,
     picturesCollection: PicturesCollection,
+    filteredResolutions: List<CameraResolution>,
+    cameraOptions: List<OptionItem>,
+    aspectRatioOptions: List<OptionItem>,
     nameError: UiText? = null,
     onAction: (CameraAction) -> Unit,
 ) {
@@ -149,9 +153,24 @@ fun NewCollectionDialog(
                         }
                     }
 
+                    // type de camera - lens facing
+                    MultipleOptionsWithLabel(
+                        label = "Camera",
+                        options = cameraOptions,
+                        selectedOption = cameraOptions.firstOrNull{ it.data == picturesCollection.lensFacing },
+                        onOptionSelected = { option ->
+                            val lensFacing = when(option.data){
+                                CameraSelector.LENS_FACING_BACK -> CameraSelector.LENS_FACING_BACK
+                                CameraSelector.LENS_FACING_FRONT -> CameraSelector.LENS_FACING_FRONT
+                                else -> CameraSelector.LENS_FACING_UNKNOWN
+
+                            }
+                            onAction(CameraAction.SetNewCollectionLensFacing(lensFacing))
+                        }
+                    )
+
                     // aspect ratio
                     MultipleOptionsWithLabel(
-//                        modifier = Modifier.height(labelHeight),
                         label = "Format",
                         options = aspectRatioOptions,
                         selectedOption = aspectRatioOptions.firstOrNull{ it.data == picturesCollection.aspectRatioMode },
@@ -166,24 +185,37 @@ fun NewCollectionDialog(
                     )
 
                     // resolution
-
+                    DropDownMenuWithLabel(
+                        modifier = Modifier,
+                        label = "Resolution",
+                        enabled = true,
+                        items = filteredResolutions,
+                        selectedItemToString = { it.displayName },
+                        selectedIndex = filteredResolutions.indexOfFirst { it.resolution == picturesCollection.cameraResolution },
+                        onItemSelected = { _, cameraResolution ->
+                            onAction(CameraAction.SetNewCollectionCameraResolution(cameraResolution))
+                        }
+                    )
+                    HorizontalDivider()
 
                     // buttons
                     Row(modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp, 8.dp),
+                        .padding(16.dp, 16.dp, 16.dp , 8.dp),
                         horizontalArrangement = Arrangement.End) {
                         Text(modifier = Modifier.clickable {
                             onAction(CameraAction.CancelNewCollectionDialog)
                         },
-                            text = "Annuler")
+                            text = "Annuler",
+                            fontWeight = FontWeight.Light)
 
                         Spacer(modifier = Modifier.width(32.dp))
 
                         Text(modifier = Modifier.clickable {
                             onAction(CameraAction.ConfirmNewCollectionDialog)
                         },
-                            text = "Créer")
+                            text = "Ajouter",
+                            fontWeight = FontWeight.Bold)
                     }
                 }
             }

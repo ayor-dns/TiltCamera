@@ -3,12 +3,14 @@ package com.android.tiltcamera.camera.domain
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Matrix
+import android.util.Size
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.view.LifecycleCameraController
 import androidx.core.content.ContextCompat
 import timber.log.Timber
+import java.util.Locale
 
 fun takePhoto(
     context: Context,
@@ -45,4 +47,21 @@ fun takePhoto(
             }
         }
     )
+}
+
+
+fun getMegaPixels(resolution: Size): String {
+    val megaPixels = (resolution.width * resolution.height) / 1_000_000.0 // 1 mégapixel = 1 million de pixels
+    return String.format(Locale.getDefault(), "%.1f MP", megaPixels)
+}
+
+fun getAspectRatioString(resolution: Size): String {
+    val gcd = gcd(resolution.width, resolution.height)
+    val widthRatio = resolution.width / gcd
+    val heightRatio = resolution.height / gcd
+    return "$widthRatio:$heightRatio"
+}
+
+private fun gcd(a: Int, b: Int): Int {
+    return if (b == 0) a else gcd(b, a % b)
 }

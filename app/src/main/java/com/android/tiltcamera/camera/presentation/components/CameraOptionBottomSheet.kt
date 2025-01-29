@@ -58,6 +58,7 @@ fun CameraOptionBottomSheet(
                 modifier = Modifier.height(50.dp),
                 label = "Collection",
                 enabled = state.collections.isNotEmpty(),
+                emptyPlaceholder = "Pas de collection",
                 items = state.collections,
                 selectedItemToString = { it.name },
                 selectedIndex = state.collections.indexOf(state.currentCollection),
@@ -100,15 +101,15 @@ fun CameraOptionBottomSheet(
             MultipleOptionsWithLabel(
                 modifier = Modifier.height(labelHeight),
                 label = "Format",
-                options = state.aspectRatioOptions,
-                selectedOption = state.aspectRatioOptions.firstOrNull { it.data == state.currentAspectRatioMode },
+                options = state.aspectRatioOptions[state.currentLensFacing] ?: emptyList(),
+                selectedOption = state.aspectRatioOptions[state.currentLensFacing]?.firstOrNull { it.data == state.currentAspectRatioMode },
                 onOptionSelected = { option ->
                     val aspectRatioMode = when(option.data){
                         AspectRatioMode.RATIO_16_9 -> AspectRatioMode.RATIO_16_9
                         AspectRatioMode.RATIO_4_3 -> AspectRatioMode.RATIO_4_3
                         else -> AspectRatioMode.RATIO_16_9
                     }
-                    onAction(CameraAction.SetAspectRatioMode(aspectRatioMode))
+                    onAction(CameraAction.OnAspectRatioModeSelected(aspectRatioMode))
                 }
             )
 
@@ -119,9 +120,9 @@ fun CameraOptionBottomSheet(
                 modifier = Modifier.height(labelHeight),
                 label = "Resolution",
                 enabled = true,
-                items = state.availableResolutions,
+                items = state.filteredResolutions,
                 selectedItemToString = { it.displayName },
-                selectedIndex = state.availableResolutions.indexOf(state.currentResolution),
+                selectedIndex = state.filteredResolutions.indexOf(state.currentCameraResolution.value),
                 onItemSelected = { _, cameraResolution ->
                     onAction(CameraAction.OnCameraResolutionSelected(cameraResolution))
                 }

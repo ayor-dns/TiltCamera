@@ -14,13 +14,16 @@ import kotlinx.coroutines.flow.Flow
 interface PictureDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertPicture(picture: PictureEntity)
+    suspend fun insertPicture(picture: PictureEntity): Long
 
     @Delete
-    suspend fun deletePicture(picture: PictureEntity)
+    suspend fun deletePicture(picture: PictureEntity): Int
 
     @Query("SELECT * FROM PictureEntity")
     fun getPictures(): Flow<List<PictureEntity>>
+
+    @Query("SELECT * FROM PictureEntity WHERE collectionIdFK = :collectionId")
+    fun getPicturesByCollectionId(collectionId: Long): Flow<List<PictureEntity>>
 
     @Query("SELECT pictureUri FROM PictureEntity WHERE collectionIdFK = :collectionId ORDER BY creationTimestamp DESC LIMIT 1")
     suspend fun getLastPictureUriByCollectionId(collectionId: Long): Uri?

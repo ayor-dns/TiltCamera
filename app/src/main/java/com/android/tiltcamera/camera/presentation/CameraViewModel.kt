@@ -3,29 +3,37 @@ package com.android.tiltcamera.camera.presentation
 import android.graphics.Bitmap
 import android.util.Size
 import androidx.camera.core.CameraSelector
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.tiltcamera.R
 import com.android.tiltcamera.camera.data.CameraInfoProvider
 import com.android.tiltcamera.camera.domain.AspectRatioMode
-import com.android.tiltcamera.camera.domain.model.CameraResolution
+import com.android.tiltcamera.camera.domain.CameraResolution
+import com.android.tiltcamera.camera.domain.PicturesCollectionValidator
 import com.android.tiltcamera.camera.domain.model.PicturesCollection
 import com.android.tiltcamera.camera.domain.repository.PreferencesRepository
 import com.android.tiltcamera.camera.domain.sensor.OrientationSensor
 import com.android.tiltcamera.camera.domain.use_case.CameraUseCases
+import com.android.tiltcamera.camera.presentation.components.OptionItem
 import com.android.tiltcamera.core.domain.Result
+import com.android.tiltcamera.core.domain.RoomError
+import com.android.tiltcamera.core.presentation.asUiText
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.util.Locale
 import javax.inject.Inject
+import kotlin.math.abs
 
 @HiltViewModel
 class CameraViewModel @Inject constructor(
@@ -33,7 +41,11 @@ class CameraViewModel @Inject constructor(
     private val cameraInfoProvider: CameraInfoProvider,
     private val orientationSensor: OrientationSensor,
     private val cameraUseCases: CameraUseCases,
+    private val picturesCollectionValidator : PicturesCollectionValidator
 ): ViewModel() {
+
+    private val validationEventChannel = Channel<ValidationEvent>()
+    val validationEvents = validationEventChannel.receiveAsFlow()
 
     private val _state = MutableStateFlow(CameraScreenState())
     val state = _state
@@ -56,18 +68,19 @@ class CameraViewModel @Inject constructor(
         }
     }
 
-    private var azimuth by mutableDoubleStateOf(0.0)
-    private var pitch by mutableDoubleStateOf(0.0)
-    private var roll by mutableDoubleStateOf(0.0)
+    private var azimuth by mutableStateOf<Double?>(null)
+    private var pitch by mutableStateOf<Double?>(null)
+    private var roll by mutableStateOf<Double?>(null)
 
 
 
     init {
-        Timber.d("init")
+        Timber.d("init CameraViewModel")
         initializeOrientationSensor()
-        loadPreferences()
         initializeCameraValues()
-
+        loadPreferences()
+        updateFilteredResolution()
+        updateNewCollectionFilteredResolution()
     }
 
     private fun initializeOrientationSensor() {
@@ -85,33 +98,9 @@ class CameraViewModel @Inject constructor(
                 )
             }
 
-            val formattedString = String.format(
-                Locale.getDefault(),
-                "Azimuth=%.2f°, Pitch=%.2f°, Roll=%.2f°",
-                azimuth,
-                pitch,
-                roll
-            )
-//            Timber.d(formattedString)
+//            Timber.d(String.format(Locale.getDefault(),"Azimuth=%.2f°, Pitch=%.2f°, Roll=%.2f°",azimuth,pitch,roll))
         }
     }
-
-    private fun loadPreferences() {
-        val collectionId = preferenceRepository.getCurrentPictureCollectionId()
-        collectionId?.let { id ->
-            viewModelScope.launch {
-                val collection = cameraUseCases.getPictureCollectionUseCase(id)
-                _state.update {
-                    it.copy(currentCollection = collection)
-                }
-            }
-        }
-        val showPictureInfo = preferenceRepository.getShowPictureInfoPreference()
-        _state.update {
-            it.copy(showPictureInfo = showPictureInfo)
-        }
-    }
-
     private fun initializeCameraValues() {
         val availableCamerasResult = cameraInfoProvider.getAvailableCameras()
         Timber.d("availableCamerasResult: $availableCamerasResult")
@@ -124,143 +113,148 @@ class CameraViewModel @Inject constructor(
                 val availableCameras = availableCamerasResult.data
 
                 val hasFrontCamera = availableCameras.any { it.lensFacing == CameraSelector.LENS_FACING_FRONT }
+
+                val availableResolutions = mutableSetOf<CameraResolution>()
+                availableCameras.forEach { cameraInfo ->
+                    val cameraResolutions = supportedResolutionsToCameraResolution(cameraInfo.supportedResolutions, cameraInfo.lensFacing)
+                    availableResolutions.addAll(cameraResolutions)
+                }
+
+                val aspectRatioOptions = mutableMapOf<Int, MutableList<OptionItem>>()
+                availableResolutions.groupBy { it.lensFacing }.forEach { (lensFacing, resolutions) ->
+                    if(resolutions.any { it.aspectRatioMode == AspectRatioMode.RATIO_16_9 }) {
+                        if(aspectRatioOptions[lensFacing] == null) aspectRatioOptions[lensFacing] = mutableListOf()
+                        aspectRatioOptions[lensFacing]!!.add(OptionItem(id = 0, icon = R.drawable.format_16_9, data = AspectRatioMode.RATIO_16_9))
+                    }
+                    if(resolutions.any { it.aspectRatioMode == AspectRatioMode.RATIO_4_3 }) {
+                        if(aspectRatioOptions[lensFacing] == null) aspectRatioOptions[lensFacing] = mutableListOf()
+                        aspectRatioOptions[lensFacing]!!.add(OptionItem(id = 1, icon = R.drawable.format_4_3, data = AspectRatioMode.RATIO_4_3))
+                    }
+                }
+
+                val availableLensFacing = availableCameras.map { it.lensFacing }.distinct()
+                val lensFacingOptions = mutableListOf<OptionItem>()
+                if(availableLensFacing.contains(CameraSelector.LENS_FACING_FRONT)){
+                    lensFacingOptions.add(OptionItem(id = 0, icon = R.drawable.camera_front_fill1_wght300, data = CameraSelector.LENS_FACING_FRONT))
+                }
+                if(availableLensFacing.contains(CameraSelector.LENS_FACING_BACK)){
+                    lensFacingOptions.add(OptionItem(id = 1, icon = R.drawable.camera_rear_fill1_wght300, data = CameraSelector.LENS_FACING_BACK))
+                }
+
                 _state.update {
                     it.copy(
                         hasFrontCamera = hasFrontCamera,
                         cameraInfos = availableCameras,
+                        availableResolutions = availableResolutions,
+                        aspectRatioOptions = aspectRatioOptions,
+                        availableLensFacing = availableLensFacing,
+                        lensFacingOptions = lensFacingOptions
                     )
                 }
-
-                updateAvailableResolution(isBackCamera = true)
             }
         }
     }
+    private fun supportedResolutionsToCameraResolution(supportedResolutions: List<Size>?, lensFacing: Int): List<CameraResolution> {
+        val cameraResolutions = mutableListOf<CameraResolution>()
 
+        supportedResolutions?.forEach { resolution ->
+            val cameraResolution = CameraResolution.fromSizeAndLensFacing(resolution, lensFacing)
+            cameraResolutions.add(cameraResolution)
+        }
+        return cameraResolutions.sortedByDescending { it.resolution.width * it.resolution.height }
+    }
+    private fun loadPreferences() {
+        val showPictureInfo = preferenceRepository.getShowPictureInfoPreference()
+        _state.update {
+            it.copy(showPictureInfo = showPictureInfo)
+        }
+
+        val collectionId = preferenceRepository.getCurrentPictureCollectionId()
+        Timber.d("loadPreferences: collectionId: $collectionId")
+        updatePicturesCollectionRelatedValues(collectionId)
+
+    }
+
+    private fun updatePicturesCollectionRelatedValues(collectionId: Long?) {
+        if(collectionId != null){
+            viewModelScope.launch {
+                val collection = cameraUseCases.getPictureCollectionUseCase(collectionId)
+                val aspectModeRatio = collection.aspectRatioMode
+                val lastPictureUri = cameraUseCases.getLastPictureUriUseCase(collectionId)
+                val lensFacing = collection.lensFacing
+                val cameraSelector = when(lensFacing){
+                    CameraSelector.LENS_FACING_BACK -> CameraSelector.DEFAULT_BACK_CAMERA
+                    CameraSelector.LENS_FACING_FRONT -> CameraSelector.DEFAULT_FRONT_CAMERA
+                    else -> CameraSelector.DEFAULT_BACK_CAMERA
+                }
+                val cameraResolution = _state.value.availableResolutions.firstOrNull {
+                    it.resolution == collection.cameraResolution &&
+                        it.lensFacing == lensFacing &&
+                        it.aspectRatioMode == aspectModeRatio
+                } ?: CameraResolution.default()
+
+                Timber.d("cameraResolution=$cameraResolution")
+
+                _state.update {
+                    it.copy(
+                        currentCollection = collection,
+                        currentCameraResolution = mutableStateOf(cameraResolution),
+                        currentLensFacing = lensFacing,
+                        currentAspectRatioMode = aspectModeRatio,
+                        lastPictureUri = lastPictureUri,
+                        currentCameraSelector = cameraSelector
+                    )
+                }
+            }.invokeOnCompletion { updateFilteredResolution() }
+        } else {
+            // set default value
+            _state.update {
+                it.copy(
+                    currentAspectRatioMode = AspectRatioMode.RATIO_4_3,
+                    currentCollection = null,
+                    currentCameraResolution = mutableStateOf(getMaxResolutionAvailable()),
+                    lastPictureUri = null,
+                    currentCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA,
+                    currentLensFacing = CameraSelector.LENS_FACING_BACK
+                )
+            }
+            updateFilteredResolution()
+        }
+    }
+    private fun getMaxResolutionAvailable(): CameraResolution {
+        val filteredResolutions = _state.value.availableResolutions.filter { cameraResolution ->
+            cameraResolution.aspectRatioMode == _state.value.currentAspectRatioMode &&
+                    cameraResolution.lensFacing == _state.value.currentLensFacing
+        }
+        return filteredResolutions.maxByOrNull { it.resolution.width * it.resolution.height } ?: CameraResolution.default(_state.value.currentAspectRatioMode, _state.value.currentLensFacing)
+    }
 
 
     fun onAction(action: CameraAction) {
         when(action){
+            // take photo
             is CameraAction.OnTakePhoto -> onTakePhoto(action.bitmap)
-            is CameraAction.SetAspectRatioMode -> setAspectRatioMode(action.aspectRatioMode)
-            is CameraAction.OnCameraResolutionSelected -> setCameraResolution(action.cameraResolution)
+
+
+            // configure camera
             is CameraAction.OnPictureCollectionSelected -> setPicturesCollection(action.picturesCollection)
+            is CameraAction.OnCameraSelectorChanged -> setCameraSelector(action.cameraSelector, action.lensFacing)
+            is CameraAction.OnAspectRatioModeSelected -> setAspectRatioMode(action.aspectRatioMode)
+            is CameraAction.OnCameraResolutionSelected -> setCameraResolution(action.cameraResolution)
             is CameraAction.SetShowPictureInfo -> setShowPictureInfo(action.showPictureInfo)
+
+
+            // create new collection
             CameraAction.ShowNewCollectionDialog -> setNewCollectionDialogVisibility(true)
-            CameraAction.CancelNewCollectionDialog -> resetNewCollection()
-            CameraAction.ConfirmNewCollectionDialog -> TODO()
-            is CameraAction.SetNewCollectionAspectRatioMode -> setNewCollectionAspectRatioMode(action.aspectRatioMode)
             is CameraAction.SetNewCollectionName -> setNewCollectionName(action.name)
+            is CameraAction.SetNewCollectionAspectRatioMode -> setNewCollectionAspectRatioMode(action.aspectRatioMode)
+            is CameraAction.SetNewCollectionCameraResolution -> setNewCollectionCameraResolution(action.cameraResolution)
+            is CameraAction.SetNewCollectionLensFacing -> setNewCollectionLensFacing(action.lensFacing)
             CameraAction.DismissNewCollectionDialog -> setNewCollectionDialogVisibility(false)
-            is CameraAction.SwitchCamera -> updateCameraSelector(action.cameraSelector)
+            CameraAction.CancelNewCollectionDialog -> resetNewCollection()
+            CameraAction.ConfirmNewCollectionDialog -> confirmNewCollection()
         }
     }
-
-    private fun setCameraResolution(cameraResolution: CameraResolution) {
-        _state.update { it.copy(
-            currentResolution = cameraResolution
-        ) }
-    }
-
-    private fun updateCameraSelector(cameraSelector: CameraSelector) {
-        _state.update { it.copy(
-            currentCameraSelector = cameraSelector
-        ) }
-        updateAvailableResolution(cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA)
-    }
-
-    private fun updateAvailableResolution(isBackCamera: Boolean) {
-        val lensFacing = if(isBackCamera) CameraSelector.LENS_FACING_BACK else CameraSelector.LENS_FACING_FRONT
-        val availableResolutions = getAvailableResolutions(_state.value.cameraInfos.firstOrNull { it.lensFacing == lensFacing }?.supportedResolutions)
-        _state.update {it.copy(
-            availableResolutions = availableResolutions
-        ) }
-    }
-    private fun getAvailableResolutions(supportedResolutions: List<Size>?): List<CameraResolution> {
-        val cameraResolutions = mutableListOf<CameraResolution>()
-
-        val filterAspectRatio = when(_state.value.currentAspectRatioMode){
-            AspectRatioMode.RATIO_16_9 -> "16:9"
-            AspectRatioMode.RATIO_4_3 ->"4:3"
-        }
-
-        supportedResolutions?.forEach { resolution ->
-            val aspectRatio = getAspectRatioString(resolution)
-            if(filterAspectRatio == aspectRatio){
-                val cameraResolution = CameraResolution(
-                    cameraResolutionId = 0,
-                    displayName = "${resolution.width}x${resolution.height} - $aspectRatio (${getMegaPixels(resolution)})",
-                    lensFacing = 0,
-                    width = resolution.width,
-                    height = resolution.height
-                )
-                cameraResolutions.add(cameraResolution)
-            }
-        }
-        return cameraResolutions.sortedByDescending { it.width * it.height }
-    }
-
-    private fun getAspectRatioString(resolution: Size): String {
-        val gcd = gcd(resolution.width, resolution.height)
-        val widthRatio = resolution.width / gcd
-        val heightRatio = resolution.height / gcd
-        return "$widthRatio:$heightRatio"
-    }
-
-    private fun gcd(a: Int, b: Int): Int {
-        return if (b == 0) a else gcd(b, a % b)
-    }
-
-    private fun getMegaPixels(resolution: Size): String {
-        val megaPixels = (resolution.width * resolution.height) / 1_000_000.0 // 1 mégapixel = 1 million de pixels
-        return String.format("%.1f MP", megaPixels)
-    }
-
-    private fun resetNewCollection() {
-        _state.update { it.copy(
-            newCollection = PicturesCollection.newCollection(),
-            nameError = null
-        ) }
-        setNewCollectionDialogVisibility(false)
-    }
-
-    private fun setNewCollectionName(name: String) {
-        _state.update { it.copy(
-            newCollection = it.newCollection.copy(name = name)
-        ) }
-    }
-
-    private fun setNewCollectionAspectRatioMode(aspectRatioMode: AspectRatioMode) {
-        _state.update { it.copy(
-            newCollection = it.newCollection.copy(aspectRatioMode = aspectRatioMode)
-        ) }
-    }
-
-    private fun setNewCollectionDialogVisibility(isVisible: Boolean) {
-        _state.update { it.copy(showNewCollectionDialog = isVisible) }
-    }
-
-    private fun setPicturesCollection(picturesCollection: PicturesCollection) {
-        _state.update { it.copy(
-            currentCollection = picturesCollection
-        ) }
-        preferenceRepository.setCurrentPictureCollectionId(picturesCollection.collectionId)
-    }
-    private fun setShowPictureInfo(showPictureInfo: Boolean) {
-        _state.update { it.copy(
-            showPictureInfo = showPictureInfo
-        ) }
-        preferenceRepository.setShowPictureInfoPreference(showPictureInfo)
-    }
-    private fun setAspectRatioMode(aspectRatioMode: AspectRatioMode) {
-        // get resolution for aspect ratio
-
-        _state.update { it.copy(
-            currentAspectRatioMode = aspectRatioMode
-        ) }
-
-        updateAvailableResolution(_state.value.currentCameraSelector == CameraSelector.DEFAULT_BACK_CAMERA)
-    }
-
 
     private fun onTakePhoto(bitmap: Bitmap) {
         // save to storage and to db
@@ -277,4 +271,178 @@ class CameraViewModel @Inject constructor(
             }
         }
     }
+
+
+    private fun updateFilteredResolution() {
+        val filteredResolutions = _state.value.availableResolutions.filter { cameraResolution ->
+            cameraResolution.aspectRatioMode == _state.value.currentAspectRatioMode &&
+                    cameraResolution.lensFacing == _state.value.currentLensFacing
+        }
+
+        val newCameraResolution: MutableState<CameraResolution>
+        val closestResolution =  getClosestResolution(_state.value.currentCameraResolution.value.resolution, filteredResolutions)
+        val resolution = filteredResolutions.firstOrNull { it.resolution == closestResolution }
+        newCameraResolution = if(resolution != null){
+            mutableStateOf(resolution)
+        } else {
+            mutableStateOf(CameraResolution.default(_state.value.currentAspectRatioMode, _state.value.currentLensFacing))
+        }
+        Timber.d("newCameraResolution=$newCameraResolution")
+
+        _state.update {it.copy(
+            filteredResolutions = filteredResolutions,
+            currentCameraResolution = newCameraResolution
+        ) }
+    }
+    private fun updateNewCollectionFilteredResolution() {
+        val filteredResolutions = _state.value.availableResolutions.filter { cameraResolution ->
+            cameraResolution.aspectRatioMode == _state.value.newCollection.aspectRatioMode &&
+                    cameraResolution.lensFacing == _state.value.newCollection.lensFacing
+        }
+
+        val newCollectionCameraResolution = if(_state.value.newCollection.cameraResolution in filteredResolutions.map { it.resolution }){
+            _state.value.newCollection.cameraResolution
+        } else {
+            getClosestResolution(_state.value.newCollection.cameraResolution, filteredResolutions)
+        }
+
+        _state.update {it.copy(
+            newCollectionFilteredResolutions = filteredResolutions,
+            newCollection = it.newCollection.copy(cameraResolution = newCollectionCameraResolution)
+        ) }
+    }
+    private fun getClosestResolution(cameraResolution: Size, filteredResolutions: List<CameraResolution>): Size {
+        var bestResolution = filteredResolutions.firstOrNull()?.resolution
+        var bestScore = Int.MAX_VALUE
+
+        for (resolution in filteredResolutions) {
+            val score = calculateScore(cameraResolution, resolution.resolution)
+
+            if (score < bestScore) {
+                bestScore = score
+                bestResolution = resolution.resolution
+            }
+        }
+
+        return bestResolution ?: Size(Int.MAX_VALUE, Int.MAX_VALUE)
+
+    }
+    private fun calculateScore(targetResolution: Size, candidateResolution: Size): Int {
+        val targetWidth = targetResolution.width
+        val targetHeight = targetResolution.height
+
+        val candidateWidth = candidateResolution.width
+        val candidateHeight = candidateResolution.height
+
+        val areaDiff = abs(targetWidth * targetHeight - candidateWidth * candidateHeight)
+
+        return areaDiff
+    }
+
+
+    private fun setPicturesCollection(picturesCollection: PicturesCollection) {
+        _state.update { it.copy(
+            currentCollection = picturesCollection
+        ) }
+        preferenceRepository.setCurrentPictureCollectionId(picturesCollection.collectionId)
+        updatePicturesCollectionRelatedValues(picturesCollection.collectionId)
+    }
+    private fun setCameraSelector(cameraSelector: CameraSelector, lensFacing: Int) {
+        _state.update { it.copy(
+            currentCameraSelector = cameraSelector,
+            currentLensFacing = lensFacing
+        ) }
+        updateFilteredResolution()
+    }
+    private fun setAspectRatioMode(aspectRatioMode: AspectRatioMode) {
+        _state.update { it.copy(
+            currentAspectRatioMode = aspectRatioMode
+        ) }
+
+        updateFilteredResolution()
+    }
+    private fun setCameraResolution(cameraResolution: CameraResolution) {
+        _state.update { it.copy(
+            currentCameraResolution = mutableStateOf(cameraResolution)
+        ) }
+    }
+    private fun setShowPictureInfo(showPictureInfo: Boolean) {
+        _state.update { it.copy(
+            showPictureInfo = showPictureInfo
+        ) }
+        preferenceRepository.setShowPictureInfoPreference(showPictureInfo)
+    }
+
+
+    private fun setNewCollectionDialogVisibility(isVisible: Boolean) {
+        _state.update { it.copy(showNewCollectionDialog = isVisible) }
+    }
+    private fun setNewCollectionName(name: String) {
+        val cleanedName = cleanName(name)
+
+        _state.update { it.copy(
+            newCollection = it.newCollection.copy(name = cleanedName)
+        ) }
+    }
+    private fun cleanName(name: String): String {
+        val regex = Regex("[^a-zA-Z0-9_\\-/ ]")
+        return regex.replace(name, "")
+    }
+    private fun setNewCollectionAspectRatioMode(aspectRatioMode: AspectRatioMode) {
+        _state.update { it.copy(
+            newCollection = it.newCollection.copy(aspectRatioMode = aspectRatioMode)
+        ) }
+        updateNewCollectionFilteredResolution()
+
+    }
+    private fun setNewCollectionLensFacing(lensFacing: Int) {
+        _state.update { it.copy(
+            newCollection = it.newCollection.copy(lensFacing = lensFacing)
+        ) }
+        updateNewCollectionFilteredResolution()
+    }
+    private fun setNewCollectionCameraResolution(cameraResolution: CameraResolution) {
+        _state.update { it.copy(
+            newCollection = it.newCollection.copy(cameraResolution = cameraResolution.resolution)
+        ) }
+    }
+    private fun resetNewCollection() {
+        _state.update { it.copy(
+            newCollection = PicturesCollection.newCollection(),
+            nameError = null
+        ) }
+        updateNewCollectionFilteredResolution()
+        setNewCollectionDialogVisibility(false)
+
+    }
+    private fun confirmNewCollection() {
+
+        viewModelScope.launch {
+            // validate name
+            val nameResult = picturesCollectionValidator.validateName(_state.value.newCollection.name)
+
+            _state.update { it.copy(
+                nameError = when(nameResult){
+                    is Result.Success -> null
+                    is Result.Error -> nameResult.error.asUiText()
+                }
+            ) }
+
+            val hasError = listOf(nameResult).any { it is Result.Error}
+            if(hasError) return@launch
+
+            // insert new collection
+            val result = cameraUseCases.insertNewCollection(_state.value.newCollection.copy(name = _state.value.newCollection.name.trim()))
+            if(result is Result.Success) {
+                resetNewCollection()
+                updatePicturesCollectionRelatedValues(result.data)
+            }
+            validationEventChannel.send(ValidationEvent.InsertNewCollectionResult(result))
+        }
+    }
+
+    sealed class ValidationEvent {
+        data class InsertNewCollectionResult(val result: Result<Long, RoomError>): ValidationEvent()
+    }
+
 }

@@ -11,7 +11,7 @@ data class PictureEntity(
     val creationTimestamp: Long,
     val pictureUri: Uri,
     val collectionIdFK: Long? = null,
-    val azimuth: Float? = null,
-    val pitch: Float? = null,
-    val roll: Float? = null
+    val azimuth: Double? = null,
+    val pitch: Double? = null,
+    val roll: Double? = null
 )

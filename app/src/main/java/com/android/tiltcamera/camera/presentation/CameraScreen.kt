@@ -3,14 +3,11 @@ package com.android.tiltcamera.camera.presentation
 import android.Manifest
 import android.content.pm.PackageManager
 import android.util.Size
-import android.view.Surface
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
-import androidx.camera.core.resolutionselector.ResolutionFilter
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.core.resolutionselector.ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
@@ -37,6 +34,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -68,8 +68,10 @@ import com.android.tiltcamera.camera.presentation.components.CameraPreview
 import com.android.tiltcamera.camera.presentation.components.LastPicturePreview
 import com.android.tiltcamera.camera.presentation.components.NewCollectionDialog
 import com.android.tiltcamera.camera.presentation.components.NoPermissionScreen
+import com.android.tiltcamera.core.domain.Result
 import com.android.tiltcamera.core.presentation.Pink
 import com.android.tiltcamera.core.presentation.Purple
+import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
 import java.util.Locale
 
@@ -108,6 +110,7 @@ fun CameraScreenRoot(
 
                 viewModel.onAction(action)
             },
+            validationEvents = viewModel.validationEvents,
             onNavigate = onNavigate
         )
     }
@@ -117,9 +120,11 @@ fun CameraScreenRoot(
 @Composable
 fun CameraScreen(
     state: CameraScreenState,
+    validationEvents: Flow<CameraViewModel.ValidationEvent>,
     onAction: (CameraAction) -> Unit,
     onNavigate: (route: Route) -> Unit
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
     val sheetState = rememberModalBottomSheetState()
     var isSheetOpen by rememberSaveable {
         mutableStateOf(false)
@@ -139,6 +144,7 @@ fun CameraScreen(
         val aspectRatioStrategy = when(state.currentAspectRatioMode){
             AspectRatioMode.RATIO_16_9 -> AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY
             AspectRatioMode.RATIO_4_3 -> AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY
+            AspectRatioMode.RATIO_OTHER -> AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY
         }
         controller.previewResolutionSelector = ResolutionSelector.Builder().setAspectRatioStrategy(aspectRatioStrategy).build()
         controller.imageCaptureResolutionSelector = ResolutionSelector.Builder().setAspectRatioStrategy(aspectRatioStrategy).build()
@@ -148,13 +154,14 @@ fun CameraScreen(
         controller.cameraSelector = state.currentCameraSelector
     }
 
-    LaunchedEffect(key1 = state.currentResolution) {
-        val targetWidth = state.currentResolution?.width ?: Int.MAX_VALUE
-        val targetHeight = state.currentResolution?.height ?: Int.MAX_VALUE
+    LaunchedEffect(key1 = state.currentCameraResolution) {
+        val targetWidth = state.currentCameraResolution.value.resolution.width
+        val targetHeight = state.currentCameraResolution.value.resolution.height
 
         val aspectRatioStrategy = when(state.currentAspectRatioMode){
             AspectRatioMode.RATIO_16_9 -> AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY
             AspectRatioMode.RATIO_4_3 -> AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY
+            AspectRatioMode.RATIO_OTHER -> AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY
         }
 
         controller.imageCaptureResolutionSelector = ResolutionSelector.Builder()
@@ -162,6 +169,17 @@ fun CameraScreen(
             .setResolutionStrategy(ResolutionStrategy(Size(targetWidth, targetHeight),FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)).build()
 
 
+    }
+
+    LaunchedEffect(key1 = Unit) {
+        validationEvents.collect { event ->
+            if(event is CameraViewModel.ValidationEvent.InsertNewCollectionResult){
+                if(event.result is Result.Success){
+                    isSheetOpen = false
+                }
+            }
+            handleValidationEvents(event, snackbarHostState)
+        }
     }
 
 
@@ -173,14 +191,16 @@ fun CameraScreen(
             state = state
         )
     }
+
     NewCollectionDialog(
         showDialog = state.showNewCollectionDialog,
-        aspectRatioOptions = state.aspectRatioOptions,
         picturesCollection = state.newCollection,
+        filteredResolutions = state.newCollectionFilteredResolutions,
+        cameraOptions = state.lensFacingOptions,
+        aspectRatioOptions = state.aspectRatioOptions[state.newCollection.lensFacing] ?: emptyList(),
         nameError = state.nameError,
         onAction = onAction
     )
-
 
     Box(modifier = Modifier
         .fillMaxSize()
@@ -190,6 +210,9 @@ fun CameraScreen(
             end = Offset(Float.POSITIVE_INFINITY, 0f)
         ))){
         Scaffold(
+            snackbarHost = {
+                SnackbarHost(hostState = snackbarHostState)
+            },
             containerColor = Color.Transparent
         ) { innerPadding ->
             Box(modifier = Modifier.padding(top = 16.dp)
@@ -309,12 +332,11 @@ fun CameraScreen(
                     IconButton(
                         enabled = state.hasFrontCamera,
                         onClick = {
-                            val cameraSelector =
-                                if (controller.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
-                                    CameraSelector.DEFAULT_FRONT_CAMERA
-                                } else CameraSelector.DEFAULT_BACK_CAMERA
-
-                            onAction(CameraAction.SwitchCamera(cameraSelector))
+                            if (controller.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+                                onAction(CameraAction.OnCameraSelectorChanged(CameraSelector.DEFAULT_FRONT_CAMERA, CameraSelector.LENS_FACING_FRONT))
+                            } else {
+                                onAction(CameraAction.OnCameraSelectorChanged(CameraSelector.DEFAULT_BACK_CAMERA, CameraSelector.LENS_FACING_BACK))
+                            }
                         },
                         modifier = Modifier
                             .size(48.dp)
@@ -349,5 +371,32 @@ fun CameraScreen(
             }
         }
     }
+}
 
+
+suspend fun handleValidationEvents(
+    event: CameraViewModel.ValidationEvent,
+    snackbarHostState: SnackbarHostState
+) {
+    var message = ""
+
+    when(event){
+        is CameraViewModel.ValidationEvent.InsertNewCollectionResult -> {
+            message = when(event.result) {
+                is Result.Error -> "Échec de l'ajout de la nouvelle collection."
+                is Result.Success -> "Nouvelle collection ajoutée"
+            }
+        }
+    }
+
+    showSnackBarMessage(snackbarHostState, message)
+}
+
+suspend fun showSnackBarMessage(
+    snackbarHostState: SnackbarHostState,
+    message: String,
+    duration: SnackbarDuration = SnackbarDuration.Short,
+    withDismissAction: Boolean = true
+){
+    snackbarHostState.showSnackbar(message = message, duration = duration, withDismissAction = withDismissAction)
 }
