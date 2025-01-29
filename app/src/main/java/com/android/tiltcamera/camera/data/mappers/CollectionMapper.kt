@@ -8,8 +8,9 @@ fun PicturesCollection.toPicturesCollectionEntity(): PictureCollectionEntity {
         collectionId = collectionId,
         name = name,
         creationTimestamp = creationTimestamp,
-        cameraResolutionIdFK = cameraResolutionIdFK,
-        aspectRatioMode = aspectRatioMode
+        cameraResolution = cameraResolution,
+        aspectRatioMode = aspectRatioMode,
+        lensFacing = lensFacing
     )
 }
 
@@ -18,7 +19,8 @@ fun PictureCollectionEntity.toPicturesCollection(): PicturesCollection {
         collectionId = collectionId,
         name = name,
         creationTimestamp = creationTimestamp,
-        cameraResolutionIdFK = cameraResolutionIdFK,
-        aspectRatioMode = aspectRatioMode
+        cameraResolution = cameraResolution,
+        aspectRatioMode = aspectRatioMode,
+        lensFacing = lensFacing
     )
 }
