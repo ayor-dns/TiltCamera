@@ -1,10 +1,8 @@
 package com.android.tiltcamera
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.PowerManager
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -12,13 +10,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Modifier
-import androidx.core.app.ActivityCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -28,10 +21,9 @@ import com.android.tiltcamera.app.Route
 import com.android.tiltcamera.camera.presentation.CameraScreenRoot
 import com.android.tiltcamera.camera.presentation.CameraViewModel
 import com.android.tiltcamera.core.presentation.TiltCameraTheme
-import com.android.tiltcamera.gallery.presentation.GalleryScreenRoot
-import com.android.tiltcamera.gallery.presentation.GalleryViewModel
+import com.android.tiltcamera.gallery.presentation.collection_gallery.GalleryScreenRoot
+import com.android.tiltcamera.gallery.presentation.collection_gallery.GalleryViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -113,7 +105,10 @@ class MainActivity : ComponentActivity() {
                             val viewModel = hiltViewModel<GalleryViewModel>()
 
                             GalleryScreenRoot(
-                                viewModel = viewModel
+                                viewModel = viewModel,
+                                onCollectionClick = { collection ->
+
+                                }
                             )
                         }
                     }
