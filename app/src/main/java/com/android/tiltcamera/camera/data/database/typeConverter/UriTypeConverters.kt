@@ -1,4 +1,4 @@
-package com.android.tiltcamera.camera.data.database
+package com.android.tiltcamera.camera.data.database.typeConverter
 
 import android.net.Uri
 import androidx.room.TypeConverter
