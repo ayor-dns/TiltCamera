@@ -28,6 +28,8 @@ import com.android.tiltcamera.app.Route
 import com.android.tiltcamera.camera.presentation.CameraScreenRoot
 import com.android.tiltcamera.camera.presentation.CameraViewModel
 import com.android.tiltcamera.core.presentation.TiltCameraTheme
+import com.android.tiltcamera.gallery.presentation.GalleryScreenRoot
+import com.android.tiltcamera.gallery.presentation.GalleryViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -108,7 +110,11 @@ class MainActivity : ComponentActivity() {
                             exitTransition = { slideOutHorizontally() },
                             popEnterTransition = { slideInHorizontally() }
                         ) {
+                            val viewModel = hiltViewModel<GalleryViewModel>()
 
+                            GalleryScreenRoot(
+                                viewModel = viewModel
+                            )
                         }
                     }
                 }
