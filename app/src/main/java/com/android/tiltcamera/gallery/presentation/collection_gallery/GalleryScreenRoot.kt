@@ -35,11 +35,13 @@ import com.android.tiltcamera.core.presentation.Pink
 import com.android.tiltcamera.core.presentation.Purple
 import com.android.tiltcamera.gallery.presentation.collection_gallery.components.CollectionList
 import com.android.tiltcamera.gallery.presentation.collection_gallery.components.SearchBar
+import com.android.tiltcamera.gallery.presentation.components.BackTopBar
 
 @Composable
 fun GalleryScreenRoot(
     viewModel: GalleryViewModel,
-    onCollectionClick: (PicturesCollection) -> Unit
+    onCollectionClick: (PicturesCollection) -> Unit,
+    onBackClick: () -> Unit,
 ) {
     GalleryScreen(
         state = viewModel.state.collectAsStateWithLifecycle().value,
@@ -47,10 +49,11 @@ fun GalleryScreenRoot(
         onAction = {action ->
             when(action){
                 is GalleryAction.OnCollectionClick -> onCollectionClick(action.collection)
+                is GalleryAction.OnBackClick -> onBackClick()
                 else -> Unit
             }
             viewModel.onAction(action)
-        }
+        },
     )
 }
 
@@ -59,7 +62,7 @@ fun GalleryScreenRoot(
 private fun GalleryScreen(
     state: GalleryState,
     picturesCollections: List<PicturesCollection>,
-    onAction: (GalleryAction) -> Unit
+    onAction: (GalleryAction) -> Unit,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -84,6 +87,13 @@ private fun GalleryScreen(
             },
             topBar = {
                 // back button
+                BackTopBar(
+                    modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
+                    title = "Gallerie",
+                    onBackClick = {
+
+                    }
+                )
             }
 
         ) { innerPadding ->
@@ -103,7 +113,7 @@ private fun GalleryScreen(
                     modifier = Modifier
                         .widthIn(max = 400.dp)
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(16.dp, 0.dp, 16.dp , 16.dp)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -154,7 +164,7 @@ private fun GalleryScreen(
                                         onCollectionClick = {
                                             onAction(GalleryAction.OnCollectionClick(it))
                                         },
-                                        modifier = Modifier.fillMaxSize(),
+                                        modifier = Modifier.fillMaxSize().padding(top = 8.dp),
                                         scrollState = searchResultsListState
                                     )
                                 }
