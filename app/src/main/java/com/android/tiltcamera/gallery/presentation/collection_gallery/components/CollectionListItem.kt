@@ -131,7 +131,7 @@ fun CollectionListItem(
 
                 }
                 .padding(textPaddingDp),
-                text = picturesCollection.name,
+                text = picturesCollection.collectionName,
                 color = textColor,
                 fontFamily = SentinelPro,
                 fontWeight = FontWeight.Bold,
