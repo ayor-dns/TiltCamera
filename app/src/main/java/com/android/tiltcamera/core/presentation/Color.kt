@@ -1,5 +1,6 @@
 package com.android.tiltcamera.core.presentation
 
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 val Purple80 = Color(0xFFD0BCFF)
@@ -22,3 +23,9 @@ val Grey700 = Color(0xFF707070)
 val Grey500 = Color(0xFFADADAD)
 val Grey300 = Color(0xFFD1D1D1)
 val Grey100 = Color(0xFFE0E0E0)
+
+val BlackGradientOverlay = Brush.verticalGradient(
+    0f to Color(0x00000000),
+    0.700f to Color(0x00000000),
+    1f to Color(0xFF000000)
+)
