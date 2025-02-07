@@ -6,8 +6,10 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 fun openAppSettings(context: Context) {
     val intent = Intent(
@@ -35,4 +37,10 @@ fun getCurrentTimeInMillis(): Long {
     // Convert ZonedDateTime to Instant and get time in milliseconds
     return currentTime.toInstant().toEpochMilli()
 
+}
+
+fun getCurrentDate(): String {
+    val today = LocalDate.now()
+    val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+    return today.format(formatter)
 }
