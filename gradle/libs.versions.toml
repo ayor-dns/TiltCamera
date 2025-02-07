@@ -17,15 +17,20 @@ kotlinxCoroutinesCore = "1.7.1"
 kotlinSerialization = "1.7.3"
 compose-plugin = "1.7.0"
 
+mapsComposeVersion = "6.4.3"
 materialIconsExtended = "1.7.6"
 navigationCompose = "2.8.0-alpha10"
 coil3 = "3.0.0-rc02"
+secretsGradlePlugin = "2.0.1"
 timber = "5.0.1"
 kspVersion = "2.1.0-1.0.29"
 roomCompiler = "2.6.1"
 daggerHiltAndroidVersion = "2.55"
+playServicesMaps = "19.0.0"
 
 [libraries]
+play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
+android-maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "mapsComposeVersion" }
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraxVersion" }
 androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "cameraxVersion" }
 androidx-camera-extensions = { module = "androidx.camera:camera-extensions", version.ref = "cameraxVersion" }
@@ -56,6 +61,7 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomCompiler" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
+secrets-gradle-plugin = { module = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin", version.ref = "secretsGradlePlugin" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleRuntimeKtx" }
@@ -73,6 +79,7 @@ jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-plugin
 ksp = {id = "com.google.devtools.ksp", version.ref = "kspVersion"}
 daggerHiltAndroid = {id = "com.google.dagger.hilt.android", version.ref = "daggerHiltAndroidVersion"}
 jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+
 
 [bundles]
 coil = [
