@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.daggerHiltAndroid)
     alias(libs.plugins.jetbrains.kotlin.serialization)
     alias(libs.plugins.jetbrainsCompose)
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
 
 android {
@@ -39,6 +40,7 @@ android {
         jvmTarget = "17"
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 }
@@ -101,6 +103,10 @@ dependencies {
 
     // COIL
     implementation(libs.bundles.coil)
+
+    /// MAPS
+    implementation(libs.android.maps.compose)
+    implementation(libs.play.services.maps)
 
 
     implementation(compose.components.resources)
