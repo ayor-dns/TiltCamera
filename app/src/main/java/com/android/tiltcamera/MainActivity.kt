@@ -17,12 +17,17 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.android.tiltcamera.app.Route
 import com.android.tiltcamera.camera.presentation.CameraScreenRoot
 import com.android.tiltcamera.camera.presentation.CameraViewModel
 import com.android.tiltcamera.core.presentation.TiltCameraTheme
+import com.android.tiltcamera.gallery.presentation.collection_detail.GalleryDetailScreenRoot
+import com.android.tiltcamera.gallery.presentation.collection_detail.GalleryDetailViewModel
 import com.android.tiltcamera.gallery.presentation.collection_gallery.GalleryScreenRoot
 import com.android.tiltcamera.gallery.presentation.collection_gallery.GalleryViewModel
+import com.android.tiltcamera.gallery.presentation.picture_detail.PictureDetailScreenRoot
+import com.android.tiltcamera.gallery.presentation.picture_detail.PictureDetailViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -43,11 +48,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
 
         hasRequiredPermissions = hasRequiredPermissions()
 
@@ -107,7 +109,47 @@ class MainActivity : ComponentActivity() {
                             GalleryScreenRoot(
                                 viewModel = viewModel,
                                 onCollectionClick = { collection ->
+                                    navController.navigate(Route.GalleryDetailScreen(collection.collectionId))
+                                },
+                                onBackClick = {
+                                    navController.popBackStack()
+                                }
 
+                            )
+                        }
+
+                        composable<Route.GalleryDetailScreen>(
+                            exitTransition = { slideOutHorizontally() },
+                            popEnterTransition = { slideInHorizontally() }
+                        ) {entry ->
+
+                            val viewModel = hiltViewModel<GalleryDetailViewModel>()
+                            viewModel.initialize(entry.toRoute<Route.GalleryDetailScreen>().collectionId)
+
+                            GalleryDetailScreenRoot(
+                                viewModel = viewModel,
+                                onPictureClick = { picture ->
+                                    navController.navigate(Route.PictureDetailScreen(picture.pictureId))
+                                },
+                                onBackClick = {
+                                    navController.popBackStack()
+                                }
+                            )
+
+                        }
+
+                        composable<Route.PictureDetailScreen>(
+                            exitTransition = { slideOutHorizontally() },
+                            popEnterTransition = { slideInHorizontally() }
+                        ) {entry ->
+
+                            val viewModel = hiltViewModel<PictureDetailViewModel>()
+                            viewModel.initialize(entry.toRoute<Route.PictureDetailScreen>().pictureId)
+
+                            PictureDetailScreenRoot(
+                                viewModel = viewModel,
+                                onBackClick = {
+                                    navController.popBackStack()
                                 }
                             )
                         }
