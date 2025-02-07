@@ -12,4 +12,11 @@ sealed interface Route {
 
     @Serializable
     data object GalleryScreen: Route
+
+    @Serializable
+    data class GalleryDetailScreen(val collectionId: Long): Route
+
+    @Serializable
+    data class PictureDetailScreen(val pictureId: Long): Route
+
 }
