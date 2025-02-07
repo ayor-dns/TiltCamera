@@ -28,11 +28,12 @@ object CameraModule {
     @Singleton
     fun provideCameraUseCases(
         @ApplicationContext context: Context,
+        preferencesRepository: PreferencesRepository,
         pictureRepository: PictureRepository,
         collectionRepository: CollectionRepository
     ): CameraUseCases {
         return CameraUseCases(
-            savePhotoUseCase = SavePhotoUseCase(context, pictureRepository),
+            savePhotoUseCase = SavePhotoUseCase(context, pictureRepository,preferencesRepository),
             getPictureCollectionUseCase = GetPictureCollectionUseCase(collectionRepository),
             getActivePictureCollectionsUseCase = GetActivePictureCollectionsUseCase(collectionRepository),
             getLastPictureUseCase = GetLastPictureUseCase(pictureRepository),
