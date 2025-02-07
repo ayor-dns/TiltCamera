@@ -12,6 +12,7 @@ class DefaultPreferencesRepository @Inject constructor(
         private const val SHARED_PREFERENCES_NAMES = "my_prefs"
         private const val CURRENT_PICTURE_COLLECTION_ID = "CURRENT_PICTURE_COLLECTION_ID"
         private const val SHOULD_SHOW_PICTURE_INFO = "SHOULD_SHOW_PICTURE_INFO"
+        private const val PICTURE_NUMBER = "PICTURE_NUMBER"
     }
 
     private val sharedPreferences = context.getSharedPreferences(SHARED_PREFERENCES_NAMES, Context.MODE_PRIVATE)
@@ -32,6 +33,14 @@ class DefaultPreferencesRepository @Inject constructor(
 
     override fun setShowPictureInfoPreference(showPictureInfo: Boolean) {
         sharedPreferences.edit().putBoolean(SHOULD_SHOW_PICTURE_INFO, showPictureInfo).apply()
+    }
+
+    override fun getPictureNumber(): Int {
+        return sharedPreferences.getInt(PICTURE_NUMBER, 0)
+    }
+
+    override fun setPictureNumber(number: Int) {
+        sharedPreferences.edit().putInt(PICTURE_NUMBER, number).apply()
     }
 
 }

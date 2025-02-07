@@ -8,4 +8,7 @@ interface PreferencesRepository {
     fun getShowPictureInfoPreference(): Boolean
     fun setShowPictureInfoPreference(showPictureInfo : Boolean)
 
+    fun getPictureNumber(): Int
+    fun setPictureNumber(number: Int)
+
 }
