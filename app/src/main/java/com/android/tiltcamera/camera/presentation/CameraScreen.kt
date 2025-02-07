@@ -13,6 +13,7 @@ import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.core.resolutionselector.ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
 import androidx.camera.view.LifecycleCameraController
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -322,9 +323,14 @@ fun CameraScreen(
 
                     // last picture
                     LastPicturePreview(
-                        lastPictureUri = state.lastPictureUri,
+                        lastPictureUri = state.lastPicture?.pictureUri,
                         modifier = Modifier
                             .size(48.dp)
+                            .clickable {
+                                state.lastPicture?.let { picture ->
+                                    onNavigate(Route.PictureDetailScreen(picture.pictureId))
+                                }
+                            }
                     )
 
 
