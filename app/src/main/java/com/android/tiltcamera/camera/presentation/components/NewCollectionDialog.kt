@@ -117,11 +117,11 @@ fun NewCollectionDialog(
                                     modifier = Modifier
                                         .weight(1f)
                                         .borderBottom(
-                                            if (picturesCollection.name.isBlank()) Grey100 else Color.Transparent,
+                                            if (picturesCollection.collectionName.isBlank()) Grey100 else Color.Transparent,
                                             1.dp,
                                             dashLine = true
                                         ),
-                                    value = picturesCollection.name,
+                                    value = picturesCollection.collectionName,
                                     onValueChange = { name ->
                                         onAction(CameraAction.SetNewCollectionName(name))
                                     },

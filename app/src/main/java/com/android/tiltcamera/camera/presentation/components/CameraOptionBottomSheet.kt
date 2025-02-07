@@ -60,7 +60,7 @@ fun CameraOptionBottomSheet(
                 enabled = state.collections.isNotEmpty(),
                 emptyPlaceholder = "Pas de collection",
                 items = state.collections,
-                selectedItemToString = { it.name },
+                selectedItemToString = { it.collectionName },
                 selectedIndex = state.collections.indexOf(state.currentCollection),
                 onItemSelected = { _, pictureCollection ->
                     onAction(CameraAction.OnPictureCollectionSelected(pictureCollection))

@@ -16,10 +16,10 @@ interface CollectionDao {
     @Query("SELECT * FROM PictureCollectionEntity WHERE collectionId = :id")
     suspend fun getPicturesCollectionById(id: Long): PictureCollectionEntity
 
-    @Query("SELECT * FROM PictureCollectionEntity")
-    fun getPicturesByCollections(): Flow<List<PictureCollectionEntity>>
+    @Query("SELECT * FROM PictureCollectionEntity WHERE isActive = 1")
+    fun getActivePicturesByCollections(): Flow<List<PictureCollectionEntity>>
 
-    @Query("SELECT * FROM PictureCollectionEntity WHERE name = :name")
+    @Query("SELECT * FROM PictureCollectionEntity WHERE collectionName = :name")
     suspend fun getPictureCollectionByName(name: String): PictureCollectionEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

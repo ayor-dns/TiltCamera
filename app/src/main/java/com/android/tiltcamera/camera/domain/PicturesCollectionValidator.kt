@@ -1,7 +1,6 @@
 package com.android.tiltcamera.camera.domain
 
-import com.android.tiltcamera.camera.domain.repository.CollectionRepository
-import com.android.tiltcamera.camera.domain.repository.PictureRepository
+import com.android.tiltcamera.core.domain.repository.CollectionRepository
 import com.android.tiltcamera.core.domain.PictureCollectionNameError
 import com.android.tiltcamera.core.domain.Result
 

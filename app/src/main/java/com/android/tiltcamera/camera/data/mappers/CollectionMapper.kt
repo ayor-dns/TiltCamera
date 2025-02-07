@@ -11,7 +11,7 @@ fun PicturesCollection.toPicturesCollectionEntity(): PictureCollectionEntity {
         cameraResolution = cameraResolution,
         aspectRatioMode = aspectRatioMode,
         lensFacing = lensFacing,
-        isActive = isActive
+        isActive = isActive,
     )
 }
 
@@ -23,6 +23,6 @@ fun PictureCollectionEntity.toPicturesCollection(): PicturesCollection {
         cameraResolution = cameraResolution,
         aspectRatioMode = aspectRatioMode,
         lensFacing = lensFacing,
-        isActive = isActive
+        isActive = isActive,
     )
 }

@@ -1,14 +1,14 @@
 package com.android.tiltcamera.camera.domain.use_case
 
 import com.android.tiltcamera.camera.domain.model.PicturesCollection
-import com.android.tiltcamera.camera.domain.repository.CollectionRepository
+import com.android.tiltcamera.core.domain.repository.CollectionRepository
 import kotlinx.coroutines.flow.Flow
 
-class GetPictureCollectionsUseCase(
+class GetActivePictureCollectionsUseCase(
     private val collectionRepository: CollectionRepository
 ) {
     operator fun invoke(): Flow<List<PicturesCollection>> {
-        return collectionRepository.getPicturesCollections()
+        return collectionRepository.getActivePicturesCollections()
     }
 
 }
