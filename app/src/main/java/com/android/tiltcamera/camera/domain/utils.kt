@@ -65,3 +65,15 @@ fun getAspectRatioString(resolution: Size): String {
 private fun gcd(a: Int, b: Int): Int {
     return if (b == 0) a else gcd(b, a % b)
 }
+
+fun padNumber(number: Int, padLength: Int): String {
+    return String.format("%0${padLength}d", number)
+}
+
+fun padNumber(number: Float, padLength: Int): String {
+    return String.format("%0${padLength}d", number)
+}
+
+fun padNumber(number: Double, padLength: Int): String {
+    return String.format("%0${padLength}d", number)
+}
