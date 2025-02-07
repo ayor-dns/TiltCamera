@@ -23,6 +23,7 @@ import com.android.tiltcamera.core.domain.Result
 import com.android.tiltcamera.core.domain.RoomError
 import com.android.tiltcamera.core.presentation.asUiText
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -47,10 +48,11 @@ class CameraViewModel @Inject constructor(
     private val validationEventChannel = Channel<ValidationEvent>()
     val validationEvents = validationEventChannel.receiveAsFlow()
 
+    private var lastPictureJob: Job? = null
     private val _state = MutableStateFlow(CameraScreenState())
     val state = _state
         .onStart {
-            observePicturesCollections()
+            observeActivePicturesCollections()
         }
         .stateIn(
             viewModelScope,
@@ -58,11 +60,24 @@ class CameraViewModel @Inject constructor(
             _state.value
         )
 
-    private fun observePicturesCollections() {
+
+
+    private fun observeActivePicturesCollections() {
         viewModelScope.launch {
-            cameraUseCases.getPictureCollectionsUseCase().collect { collections ->
+            cameraUseCases.getActivePictureCollectionsUseCase().collect { collections ->
                 _state.update {
                     it.copy(collections = collections)
+                }
+            }
+        }
+    }
+    private fun observeLastPicture() {
+        lastPictureJob?.cancel()
+
+        lastPictureJob = viewModelScope.launch {
+            _state.value.currentCollection?.let{currentCollection ->
+                cameraUseCases.getLastPictureUseCase(currentCollection.collectionId).collect { lastPicture ->
+                    _state.update { it.copy(lastPicture = lastPicture) }
                 }
             }
         }
@@ -180,7 +195,6 @@ class CameraViewModel @Inject constructor(
             viewModelScope.launch {
                 val collection = cameraUseCases.getPictureCollectionUseCase(collectionId)
                 val aspectModeRatio = collection.aspectRatioMode
-                val lastPictureUri = cameraUseCases.getLastPictureUriUseCase(collectionId)
                 val lensFacing = collection.lensFacing
                 val cameraSelector = when(lensFacing){
                     CameraSelector.LENS_FACING_BACK -> CameraSelector.DEFAULT_BACK_CAMERA
@@ -201,10 +215,12 @@ class CameraViewModel @Inject constructor(
                         currentCameraResolution = mutableStateOf(cameraResolution),
                         currentLensFacing = lensFacing,
                         currentAspectRatioMode = aspectModeRatio,
-                        lastPictureUri = lastPictureUri,
                         currentCameraSelector = cameraSelector
                     )
                 }
+
+                observeLastPicture()
+
             }.invokeOnCompletion { updateFilteredResolution() }
         } else {
             // set default value
@@ -213,7 +229,7 @@ class CameraViewModel @Inject constructor(
                     currentAspectRatioMode = AspectRatioMode.RATIO_4_3,
                     currentCollection = null,
                     currentCameraResolution = mutableStateOf(getMaxResolutionAvailable()),
-                    lastPictureUri = null,
+                    lastPicture = null,
                     currentCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA,
                     currentLensFacing = CameraSelector.LENS_FACING_BACK
                 )
@@ -381,7 +397,7 @@ class CameraViewModel @Inject constructor(
         val cleanedName = cleanName(name)
 
         _state.update { it.copy(
-            newCollection = it.newCollection.copy(name = cleanedName)
+            newCollection = it.newCollection.copy(collectionName = cleanedName)
         ) }
     }
     private fun cleanName(name: String): String {
@@ -419,7 +435,7 @@ class CameraViewModel @Inject constructor(
 
         viewModelScope.launch {
             // validate name
-            val nameResult = picturesCollectionValidator.validateName(_state.value.newCollection.name)
+            val nameResult = picturesCollectionValidator.validateName(_state.value.newCollection.collectionName)
 
             _state.update { it.copy(
                 nameError = when(nameResult){
@@ -432,7 +448,7 @@ class CameraViewModel @Inject constructor(
             if(hasError) return@launch
 
             // insert new collection
-            val result = cameraUseCases.insertNewCollection(_state.value.newCollection.copy(name = _state.value.newCollection.name.trim()))
+            val result = cameraUseCases.insertNewCollection(_state.value.newCollection.copy(collectionName = _state.value.newCollection.collectionName.trim()))
             if(result is Result.Success) {
                 resetNewCollection()
                 updatePicturesCollectionRelatedValues(result.data)
