@@ -1,14 +1,13 @@
-package com.android.tiltcamera.camera.domain.repository
+package com.android.tiltcamera.core.domain.repository
 
-import android.net.Uri
 import com.android.tiltcamera.camera.domain.model.Picture
-import com.android.tiltcamera.camera.domain.model.PicturesCollection
 import kotlinx.coroutines.flow.Flow
 
 interface PictureRepository {
 
+    fun getPictureByIdAsFlow(pictureId: Long?): Flow<Picture?>
     suspend fun insertPicture(picture: Picture): Long
     fun getPicturesByCollectionId(collectionId: Long): Flow<List<Picture>>
-    suspend fun getLastPictureUriByCollectionId(collectionId: Long): Uri?
+    fun getLastPictureUriByCollectionId(collectionId: Long): Flow<Picture?>
 
 }

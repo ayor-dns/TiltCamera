@@ -1,13 +1,12 @@
 package com.android.tiltcamera.camera.presentation
 
-import android.net.Uri
-import android.util.Size
 import androidx.camera.core.CameraSelector
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import com.android.tiltcamera.camera.data.CameraInfoProvider
 import com.android.tiltcamera.camera.domain.AspectRatioMode
 import com.android.tiltcamera.camera.domain.CameraResolution
+import com.android.tiltcamera.camera.domain.model.Picture
 import com.android.tiltcamera.camera.domain.model.PicturesCollection
 import com.android.tiltcamera.camera.presentation.components.OptionItem
 import com.android.tiltcamera.core.presentation.UiText
@@ -34,7 +33,7 @@ data class CameraScreenState(
     val cameraInfos: List<CameraInfoProvider.CameraInfo> = emptyList(),
 
     val isSavingPicture: Boolean = false,
-    val lastPictureUri: Uri? = null,
+    val lastPicture: Picture? = null,
 
     val azimuth: Double? = null,
     val pitch: Double? = null,
