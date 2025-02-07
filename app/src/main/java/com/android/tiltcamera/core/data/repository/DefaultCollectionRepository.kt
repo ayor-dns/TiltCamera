@@ -1,10 +1,10 @@
-package com.android.tiltcamera.camera.data.repository
+package com.android.tiltcamera.core.data.repository
 
 import com.android.tiltcamera.camera.data.database.dao.CollectionDao
 import com.android.tiltcamera.camera.data.mappers.toPicturesCollection
 import com.android.tiltcamera.camera.data.mappers.toPicturesCollectionEntity
 import com.android.tiltcamera.camera.domain.model.PicturesCollection
-import com.android.tiltcamera.camera.domain.repository.CollectionRepository
+import com.android.tiltcamera.core.domain.repository.CollectionRepository
 import com.android.tiltcamera.core.domain.Result
 import com.android.tiltcamera.core.domain.RoomError
 import kotlinx.coroutines.flow.Flow
@@ -19,8 +19,8 @@ class DefaultCollectionRepository(
         return collectionDao.getPicturesCollectionById(id).toPicturesCollection()
     }
 
-    override fun getPicturesCollections(): Flow<List<PicturesCollection>> {
-        return collectionDao.getPicturesByCollections().map {entityList ->
+    override fun getActivePicturesCollections(): Flow<List<PicturesCollection>> {
+        return collectionDao.getActivePicturesByCollections().map { entityList ->
             entityList.map { entity ->
                 entity.toPicturesCollection()
             }
