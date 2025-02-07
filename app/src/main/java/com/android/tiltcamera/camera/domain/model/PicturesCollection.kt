@@ -6,17 +6,18 @@ import com.android.tiltcamera.camera.domain.AspectRatioMode
 
 data class PicturesCollection(
     val collectionId: Long = 0,
-    val name: String,
+    val collectionName: String,
     val creationTimestamp: Long,
     val cameraResolution: Size,
     val aspectRatioMode: AspectRatioMode,
     val lensFacing: Int,
+    val isActive: Boolean = true,
 ) {
     companion object {
         fun newCollection(): PicturesCollection {
             return PicturesCollection(
                 collectionId = 0,
-                name = "Nouvelle collection",
+                collectionName = "Nouvelle collection",
                 creationTimestamp = 0,
                 cameraResolution = Size(Int.MAX_VALUE, Int.MAX_VALUE),
                 aspectRatioMode = AspectRatioMode.RATIO_4_3,

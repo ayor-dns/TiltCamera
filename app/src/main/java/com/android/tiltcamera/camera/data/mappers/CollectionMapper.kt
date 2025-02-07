@@ -6,21 +6,23 @@ import com.android.tiltcamera.camera.domain.model.PicturesCollection
 fun PicturesCollection.toPicturesCollectionEntity(): PictureCollectionEntity {
     return PictureCollectionEntity(
         collectionId = collectionId,
-        name = name,
+        collectionName = collectionName,
         creationTimestamp = creationTimestamp,
         cameraResolution = cameraResolution,
         aspectRatioMode = aspectRatioMode,
-        lensFacing = lensFacing
+        lensFacing = lensFacing,
+        isActive = isActive
     )
 }
 
 fun PictureCollectionEntity.toPicturesCollection(): PicturesCollection {
     return PicturesCollection(
         collectionId = collectionId,
-        name = name,
+        collectionName = collectionName,
         creationTimestamp = creationTimestamp,
         cameraResolution = cameraResolution,
         aspectRatioMode = aspectRatioMode,
-        lensFacing = lensFacing
+        lensFacing = lensFacing,
+        isActive = isActive
     )
 }
