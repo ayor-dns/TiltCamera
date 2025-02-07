@@ -57,3 +57,13 @@ val inputErrorTextStyle = TextStyle(
     lineHeight = 14.sp,
     color = RedError
 )
+val notEditableText = TextStyle(
+    fontSize = 14.sp,
+    fontStyle = FontStyle.Italic,
+    lineHeight = 14.sp,
+    color = Grey500
+)
+val titleImageDetailBottomSheetTextStyle = TextStyle(
+    fontWeight = FontWeight.Bold
+
+)
